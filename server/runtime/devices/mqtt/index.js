@@ -26,7 +26,10 @@ function MQTTclient(_data, _logger, _events, _runtime) {
     var topicsMap = {};                 // Map the topic subscribed, to check by on.message
     var memoryTagToPublish = new Map(); // Map tag to publish, content in topics as 'tag'
     var refTagToTopics = {};            // Map of Tag to Topic (with ref to other device tag)
-    
+    var addFunc = null;
+    var statusGate = {};
+    var logGate = {};
+
     const certificatesDir = _data.certificatesDir;
 
     /**
@@ -53,6 +56,7 @@ function MQTTclient(_data, _logger, _events, _runtime) {
                                 options.clientId = property.clientId;
                                 options.username = property.uid;
                                 options.password = property.pwd;
+
                                 if (property.cert) {
                                     options.cert = fs.readFileSync(path.join(certificatesDir, property.cert));
                                 }
@@ -151,8 +155,17 @@ function MQTTclient(_data, _logger, _events, _runtime) {
         if (_checkWorking(true)) {
             if (client) {
                 try {
-                    //var varsValueChanged = await _checkVarsChanged();
-                    //lastTimestampValue = new Date().getTime();
+                    lastTimestampValue = new Date().getTime();
+                    for (var id in statusGate){
+                        if(statusGate[id].value && lastTimestampValue-statusGate[id].timestamp>5000){
+                            statusGate[id].value = false;
+                            statusGate[id].rawValue = false;
+                        }
+                    }
+                    _emitValues(statusGate);
+
+                        // var varsValueChanged = await _checkVarsChanged();
+                   // lastTimestampValue = new Date().getTime();
                     //_emitValues(varsValue);
 
                     //if (this.addDaq && !utils.isEmptyObject(varsValueChanged)) {
@@ -224,7 +237,8 @@ function MQTTclient(_data, _logger, _events, _runtime) {
      * Bind the DAQ store function
      */
     this.bindAddDaq = function (fnc) {
-        this.addDaq = fnc;                         // Add the DAQ value to db history
+        //this.addDaq = fnc;// Add the DAQ value to db history
+        addFunc = fnc;
     }
     this.addDaq = null;
 
@@ -283,8 +297,8 @@ function MQTTclient(_data, _logger, _events, _runtime) {
      * Return Topic value { id: <name>, value: <value>, ts: <timestamp> }
      */
     this.getValue = function (id) {
-        if (varsValue[id]) {
-            return { id: id, value: varsValue[id].value, ts: lastTimestampValue };
+        if (statusGate[id]) {
+            return { id: id, value: statusGate[id].value, ts: lastTimestampValue };
         }
         return null;
     }
@@ -370,31 +384,47 @@ function MQTTclient(_data, _logger, _events, _runtime) {
             var topics = Object.values(data.tags).map(t => t.address);
             _mapTopicsAddress(Object.values(data.tags));
             if (topics && topics.length) {
-                client.subscribe(topics, function (err) {
+                client.subscribe(topics,{'qos': 2,'clean': false}, function (err) {
                     if (err) {
                         reject(err);
                     } else {
                         client.on('message', function (topicAddr, msg, pkt) {
+                            let lastTime = new Date().getTime();
                             if (topicsMap[topicAddr]) {
                                 for (var i = 0; i < topicsMap[topicAddr].length; i++) {
                                     var id = topicsMap[topicAddr][i].id;
                                     var oldvalue = data.tags[id].rawValue;
                                     data.tags[id].rawValue = msg.toString();
-                                    data.tags[id].timestamp = new Date().getTime();
+                                    data.tags[id].timestamp = lastTime;
                                     data.tags[id].changed = oldvalue !== data.tags[id].rawValue;
                                     if (data.tags[id].type === 'json' && data.tags[id].options && data.tags[id].options.subs && data.tags[id].memaddress) {
                                         try {
                                             var subitems = JSON.parse(data.tags[id].rawValue);
                                             if (!utils.isNullOrUndefined(subitems[data.tags[id].memaddress])) {
                                                 data.tags[id].rawValue = subitems[data.tags[id].memaddress];
+                                                data.tags[id].value = data.tags[id].rawValue;
+                                                if(data.tags[id].daq.enabled){
+                                                    logGate[id] = data.tags[id];
+                                                }else if(topicAddr==="statusGate"){
+                                                    statusGate[id] = data.tags[id];
+                                                }
                                             } else {
                                                 data.tags[id].rawValue = oldvalue;
+                                                data.tags[id].value = oldvalue;
                                             }
+
                                         } catch (err) {
                                             console.error(err);
                                         }
                                     }
                                 }
+                                if(topicAddr==="logGate") {
+                                    addFunc(logGate, data.name, data.id);
+                                    _emitValues(logGate);
+                                    logGate = {};
+                                }
+
+
                             }
                         });
                         resolve();
@@ -593,6 +623,8 @@ function MQTTclient(_data, _logger, _events, _runtime) {
  */
 function getConnectionOptions(property) {
     return {
+        clean: false,
+        qos: 2,
         url: property.address,
         username: property.username,
         password: property.password,

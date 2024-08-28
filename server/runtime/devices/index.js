@@ -165,6 +165,7 @@ function loadDevice(device) {
         }
     }
     if (runtime.settings.daqEnabled) {
+
         var fncToSaveDaqValue = runtime.daqStorage.addDaqNode(device.id, activeDevices[device.id].getTagProperty);
         activeDevices[device.id].bindSaveDaqValue(fncToSaveDaqValue);
         activeDevices[device.id].bindGetDaqValueToRestore(runtime.daqStorage.getCurrentStorageFnc());
