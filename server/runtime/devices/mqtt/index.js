@@ -151,13 +151,13 @@ function MQTTclient(_data, _logger, _events, _runtime) {
         if (_checkWorking(true)) {
             if (client) {
                 try {
-                    var varsValueChanged = await _checkVarsChanged();
-                    lastTimestampValue = new Date().getTime();
-                    _emitValues(varsValue);
+                    //var varsValueChanged = await _checkVarsChanged();
+                    //lastTimestampValue = new Date().getTime();
+                    //_emitValues(varsValue);
 
-                    if (this.addDaq && !utils.isEmptyObject(varsValueChanged)) {
-                        this.addDaq(varsValueChanged, data.name, data.id);
-                    }
+                    //if (this.addDaq && !utils.isEmptyObject(varsValueChanged)) {
+                    //    this.addDaq(varsValueChanged, data.name, data.id);
+                    //}
                 } catch (err) {
                     logger.error(`'${data.name}' polling error: ${err}`);
                 }
