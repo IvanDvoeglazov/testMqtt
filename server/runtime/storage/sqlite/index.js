@@ -111,6 +111,7 @@ function DaqNode(_settings, _log, _id, _currentStorate) {
      * Add Daq value of Tag/Node
      * Check if the Tag/Node is mapped otherwise first add the value to data db then check if the db is to split and to archive
      */
+    /*
     this.addDaqValue = function (tagid, tagvalue) {
         if (initready) {
             if (!daqTagsMap[tagid]) {
@@ -174,7 +175,7 @@ function DaqNode(_settings, _log, _id, _currentStorate) {
             }
         }
     }
-
+*/
     /**
      * Add Daq value of Tag/Node
      * Check if the Tag/Node is mapped otherwise first add the value to data db then check if the db is to split and to archive
@@ -186,17 +187,18 @@ function DaqNode(_settings, _log, _id, _currentStorate) {
                 var addDaqfnc = [];
                 var dataToRestore = [];
                 // prepare functions
-                for (var tagid in tags) {
+                for (let tagid in tags) {
                     const tag = tags[tagid];
-                    if (!tag.daq) {
-                        continue;
-                    }
-                    if (tag.daq.restored) {
-                        dataToRestore.push({id: tag.id, deviceId: deviceId, value: tag.value});
-                    }
-                    if (!tag.daq.enabled) {
-                        continue;
-                    }
+
+                    //if (!tag.daq) {
+                        //continue;
+                    //}
+                    //if (tag.daq.restored) {
+                       // dataToRestore.push({id: tag.id, deviceId: deviceId, value: tag.value});
+                    //}
+                    //if (!tag.daq.enabled) {
+                    //    continue;
+                    //}
 
                     if (!daqTagsMap[tagid]) {
                         var prop = fncGetTagProp(tagid);
@@ -204,7 +206,7 @@ function DaqNode(_settings, _log, _id, _currentStorate) {
                             addMapfnc.push(_insertTagToMap(prop.id, prop.name, prop.type));
                         }
                     } else {
-                        addDaqfnc.push(_insertTagValue(daqTagsMap[tagid].mapid, tag.value));
+                        addDaqfnc.push(_insertTagValue(daqTagsMap[tagid].mapid, tag.value,tag.timestamp));
                     }
                 }
                 // check function to insert in map            
@@ -218,6 +220,7 @@ function DaqNode(_settings, _log, _id, _currentStorate) {
                                 logger.error(`daqstorage.add-daq-value _getTagMap failed! '${id}' ${err}`);
                             });
                         }
+
                     }, reason => {
                         if (reason && reason.stack) {
                             logger.error(`daqstorage.add-daq-value _insertTagToMap failed! '${id}' ${reason.stack}`);
@@ -226,10 +229,13 @@ function DaqNode(_settings, _log, _id, _currentStorate) {
                         }
                         _checkDataWorking(false);
                     });
+
                 } 
                 // check function to add daq data            
                 if (addDaqfnc.length > 0) {
+
                     if (_checkDataWorking(true)) {
+
                         Promise.all(addDaqfnc).then(result => {
                             // check db tokenizer after inserted
                             var lastts = 0 || result[0];
@@ -554,6 +560,7 @@ function DaqNode(_settings, _log, _id, _currentStorate) {
 
     function _insertTagToMap(tagid, name, type) {
         return new Promise(function (resolve, reject) {
+
             var sqlRequest = "INSERT INTO data (id, name, type) ";
             db_daqmap.run(sqlRequest + "VALUES('" + tagid + "','" + name + "','" + type + "'); SELECT last_insert_rowid() FROM data", function (err) {
                 if (err !== null) {
@@ -606,15 +613,17 @@ function DaqNode(_settings, _log, _id, _currentStorate) {
                     for (var i = 0; i < rows.length; i++) {
                         rows[i].value =  booleanMapping[rows[i].value] !== undefined ? booleanMapping[rows[i].value] : rows[i].value;
                     }
+
                     resolve(rows);
                 }
             });
         });
     }
 
-    function _insertTagValue(mapid, value) {
+    function _insertTagValue(mapid, value, ts) {
         return new Promise(function (resolve, reject) {
-            var ts = new Date().getTime();
+            //console.log(value);
+            //var ts = new Date().getTime();
             var sqlRequest = "INSERT INTO data (dt, id, value) ";
             db_daqdata.run(sqlRequest + "VALUES('" + ts + "','" + mapid + "','" + value + "')", function (err) {
                 if (err !== null) {

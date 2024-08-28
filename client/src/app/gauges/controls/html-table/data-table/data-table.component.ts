@@ -161,7 +161,7 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnDestroy {
             this.tagsMap[variableId].rows.forEach((rowIndex: number) => {
                 if (this.timestampMap[rowIndex]) {
                     this.timestampMap[rowIndex].forEach((cell: TableCellData) => {
-                        cell.stringValue = format(new Date(dt * 1e3), cell.valueFormat || 'YYYY-MM-DDTHH:mm:ss');
+                        cell.stringValue = format(new Date(dt * 1e3), cell.valueFormat || 'hh:mm:ss±hh');
                     });
                 }
             });
@@ -225,12 +225,16 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnDestroy {
                 let column = <TableColumn>this.columnsStyle[this.displayedColumns[x]];
                 row[column.id] = <TableCellData> { stringValue: '' };
                 if (column.type === TableCellType.timestamp) {
-                    row[column.id].stringValue = format(new Date(data[0][i]), column.valueFormat || 'YYYY-MM-DDTHH:mm:ss');
+                    row[column.id].stringValue = format(new Date(data[0][i]), column.valueFormat || 'hh:mm:ss±hh');
                     row[column.id].timestamp = data[0][i];
                 } else if (column.type === TableCellType.variable) {
                     const tempValue = data[x][i];
                     if (Utils.isNumeric(tempValue)) {
-                        row[column.id].stringValue = (data[colPos][i]) ? Utils.formatValue(tempValue, column.valueFormat) : '';
+                        if(column.valueFormat==="timestamp") {
+                            row[column.id].stringValue = format(new Date(Math.round(tempValue)), 'YYYY-MM-DDThh:mm:ss±hh');
+                        }else {
+                            row[column.id].stringValue = (data[colPos][i]) ? Utils.formatValue(tempValue, column.valueFormat) : '';
+                        }
                     } else {
                         row[column.id].stringValue = tempValue;
                     }
@@ -292,12 +296,17 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnDestroy {
             row[column.id] = <TableCellData> { stringValue: '' };
             if (column.type === TableCellType.timestamp) {
                 timestapColumnId = column.id;
-                row[column.id].stringValue = format(new Date(dt), column.valueFormat || 'YYYY-MM-DDTHH:mm:ss');
+                row[column.id].stringValue = format(new Date(dt), column.valueFormat || 'hh:mm:ss±hh');
                 row[column.id].timestamp = dt;
             } else if (column.variableId === tagId) {
                 const tempValue = value;
                 if (Utils.isNumeric(tempValue)) {
-                    row[column.id].stringValue = Utils.formatValue(tempValue, column.valueFormat);
+                    if(column.valueFormat==="timestamp"){
+                        row[column.id].stringValue = format(new Date(tempValue),  'YYYY-MM-DDThh:mm:ss±hh');
+                    }else{
+                        row[column.id].stringValue = Utils.formatValue(tempValue, column.valueFormat);
+                    }
+
                 } else {
                     row[column.id].stringValue = tempValue;
                 }
@@ -309,12 +318,13 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnDestroy {
         }
         if (valueColumnId) {
             const firstRow = this.dataSource.data[0];
-            if (firstRow && firstRow[timestapColumnId].stringValue === row[timestapColumnId].stringValue) {
+            if (firstRow && firstRow[timestapColumnId].timestamp === row[timestapColumnId].timestamp) {
                 firstRow[valueColumnId].stringValue = row[valueColumnId].stringValue;
                 if (exnameColumnId) {
                     firstRow[exnameColumnId].stringValue = row[exnameColumnId].stringValue;
                 }
-            } else {
+           }
+            else {
                 this.dataSource.data.unshift(row);
                 const rangeDiff = this.lastDaqQuery.to - this.lastDaqQuery.from;
                 this.lastDaqQuery.to = row[timestapColumnId].timestamp;
@@ -332,7 +342,7 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnDestroy {
                     this.dataSource.data.splice(-count, count);
                 }
                 this.dataSource = new MatTableDataSource(this.dataSource.data);
-            }
+           }
         }
     }
 
@@ -449,7 +459,7 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnDestroy {
             }
         } else if (cell.type === TableCellType.timestamp) {
             if (this.isEditor) {
-                cell.stringValue = format(new Date(0), cell.valueFormat || 'YYYY-MM-DDTHH:mm:ss');;
+                cell.stringValue = format(new Date(0), cell.valueFormat || 'hh:mm:ss±hh');
             }
             this.addTimestampToMap(cell);
         } else if (cell.type === TableCellType.label) {
