@@ -162,7 +162,7 @@ function MQTTclient(_data, _logger, _events, _runtime) {
                             statusGate[id].rawValue = false;
                         }
                     }
-                    _emitValues(statusGate);
+                    _emitValues(data.tags);
 
                         // var varsValueChanged = await _checkVarsChanged();
                    // lastTimestampValue = new Date().getTime();
@@ -297,8 +297,8 @@ function MQTTclient(_data, _logger, _events, _runtime) {
      * Return Topic value { id: <name>, value: <value>, ts: <timestamp> }
      */
     this.getValue = function (id) {
-        if (statusGate[id]) {
-            return { id: id, value: statusGate[id].value, ts: lastTimestampValue };
+        if (data.tags[id]) {
+            return { id: id, value: data.tags[id].value, ts: lastTimestampValue };
         }
         return null;
     }
@@ -405,7 +405,7 @@ function MQTTclient(_data, _logger, _events, _runtime) {
                                                 data.tags[id].value = data.tags[id].rawValue;
                                                 if(data.tags[id].daq.enabled){
                                                     logGate[id] = data.tags[id];
-                                                }else if(topicAddr==="statusGate"){
+                                                }else if(data.tags[id].daq.restored){
                                                     statusGate[id] = data.tags[id];
                                                 }
                                             } else {
@@ -418,7 +418,7 @@ function MQTTclient(_data, _logger, _events, _runtime) {
                                         }
                                     }
                                 }
-                                if(topicAddr==="logGate") {
+                                if(!utils.isEmptyObject(logGate)) {
                                     addFunc(logGate, data.name, data.id);
                                     _emitValues(logGate);
                                     logGate = {};
