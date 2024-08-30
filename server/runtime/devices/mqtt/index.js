@@ -27,7 +27,6 @@ function MQTTclient(_data, _logger, _events, _runtime) {
     var memoryTagToPublish = new Map(); // Map tag to publish, content in topics as 'tag'
     var refTagToTopics = {};            // Map of Tag to Topic (with ref to other device tag)
     var addFunc = null;
-    var statusGate = {};
     var logGate = {};
 
     const certificatesDir = _data.certificatesDir;
@@ -156,10 +155,11 @@ function MQTTclient(_data, _logger, _events, _runtime) {
             if (client) {
                 try {
                     lastTimestampValue = new Date().getTime();
-                    for (var id in statusGate){
-                        if(statusGate[id].value && lastTimestampValue-statusGate[id].timestamp>5000){
-                            statusGate[id].value = false;
-                            statusGate[id].rawValue = false;
+
+                    for (var id in data.tags){
+                        if(data.tags[id].daq.restored && data.tags[id].value && lastTimestampValue-data.tags[id].timestamp>5000){
+                            data.tags[id].value = false;
+                            data.tags[id].rawValue = false;
                         }
                     }
                     _emitValues(data.tags);
@@ -405,8 +405,6 @@ function MQTTclient(_data, _logger, _events, _runtime) {
                                                 data.tags[id].value = data.tags[id].rawValue;
                                                 if(data.tags[id].daq.enabled){
                                                     logGate[id] = data.tags[id];
-                                                }else if(data.tags[id].daq.restored){
-                                                    statusGate[id] = data.tags[id];
                                                 }
                                             } else {
                                                 data.tags[id].rawValue = oldvalue;
