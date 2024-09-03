@@ -9,7 +9,20 @@ import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
 import { TranslateService } from '@ngx-translate/core';
 
 import { DaterangeDialogComponent } from '../../../../gui-helpers/daterange-dialog/daterange-dialog.component';
-import { IDateRange, DaqQuery, TableType, TableOptions, TableColumn, TableCellType, TableCell, TableRangeType, TableCellAlignType, GaugeEvent, GaugeEventType } from '../../../../_models/hmi';
+import {
+    IDateRange,
+    DaqQuery,
+    TableType,
+    TableOptions,
+    TableColumn,
+    TableCellType,
+    TableCell,
+    TableRangeType,
+    TableCellAlignType,
+    GaugeEvent,
+    GaugeEventType,
+    CustomColorRow
+} from '../../../../_models/hmi';
 import { format } from 'fecha';
 import { BehaviorSubject, Subject, timer } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -17,6 +30,8 @@ import { DataConverterService, DataTableColumn, DataTableContent } from '../../.
 import { ScriptService } from '../../../../_services/script.service';
 import { ProjectService } from '../../../../_services/project.service';
 import { SCRIPT_PARAMS_MAP, ScriptParam } from '../../../../_models/script';
+import XG_DEBUG from "xgplayer/es/utils/debug";
+import logInfo = XG_DEBUG.logInfo;
 
 declare const numeral: any;
 @Component({
@@ -57,6 +72,7 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnDestroy {
     setOfSourceTableData = false;
     selectedRow = null;
     events: GaugeEvent[];
+    customColorRow: CustomColorRow[];
     eventSelectionType = Utils.getEnumKey(GaugeEventType, GaugeEventType.select);
 
     constructor(
@@ -268,6 +284,27 @@ export class DataTableComponent implements OnInit, AfterViewInit, OnDestroy {
 
     isSelected(row: MatRow) {
         return this.selectedRow === row;
+    }
+
+    getColorRow(row: MatRow){
+        if(this.isSelected(row)){
+            return this.tableOptions.selection.background;
+        }
+        let colorCustom = this.tableOptions.row.background;
+        this.customColorRow.forEach(custom => {
+            if(!Utils.isNullOrUndefined(custom.color)&&!Utils.isNullOrUndefined(custom.id)&&!Utils.isNullOrUndefined(custom.condition)) {
+                if (custom.condition === "==") {
+                    if (row[custom.id].stringValue === custom.stringValue) {
+                        colorCustom = custom.color;
+                    }
+                } else {
+                    if (row[custom.id].stringValue !== custom.stringValue) {
+                        colorCustom = custom.color;
+                    }
+                }
+            }
+        });
+        return colorCustom;
     }
 
     private runScript(event: GaugeEvent, selected: MatRow) {

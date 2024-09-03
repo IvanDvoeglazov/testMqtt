@@ -251,6 +251,14 @@ export class GaugeEvent {
     actoptions = {};
 }
 
+export class CustomColorRow {
+    columnName: string;
+    id: string;
+    color: string;
+    condition: string;
+    stringValue: string;
+}
+
 export enum GaugeActionsType {
     hide = 'shapes.action-hide',
     show = 'shapes.action-show',
@@ -389,6 +397,7 @@ export interface GaugeTableProperty {
     type: TableType;
     options: TableOptions;
     events: GaugeEvent[];
+    customColorRow: CustomColorRow[];
 }
 
 export enum TableType {

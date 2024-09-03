@@ -62,7 +62,8 @@ export class HtmlTableComponent {
                         id: null,
                         type: TableType.data,
                         options: DataTableComponent.DefaultOptions(),
-                        events: []
+                        events: [],
+                        customColorRow: []
                     };
                 }
                 htmlTable.innerHTML = '';
@@ -72,6 +73,7 @@ export class HtmlTableComponent {
                 (<DataTableComponent>componentRef.instance).id = gab.id;
                 (<DataTableComponent>componentRef.instance).type = gab.property.type;
                 (<DataTableComponent>componentRef.instance).events = gab.property.events;
+                (<DataTableComponent>componentRef.instance).customColorRow = gab.property.customColorRow;
 
                 componentRef.changeDetectorRef.detectChanges();
                 htmlTable.appendChild(componentRef.location.nativeElement);

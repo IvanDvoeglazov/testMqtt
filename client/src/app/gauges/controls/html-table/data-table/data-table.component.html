@@ -17,7 +17,7 @@
                 (click)="onDateRange()">
                 <mat-icon aria-label="time range">access_time</mat-icon>
             </button>
-            <button mat-flat-button class="moka-toolbar-editor moka-toolbar-button" [style.color]="tableOptions.row.color" [style.backgroundColor]="tableOptions.row.background" 
+            <button mat-flat-button class="moka-toolbar-editor moka-toolbar-button" [style.color]="tableOptions.row.color" [style.backgroundColor]="tableOptions.row.background"
                 (click)="onExportData()">
                 <mat-icon aria-label="export data">vertical_align_bottom</mat-icon>
             </button>
@@ -71,14 +71,14 @@
              [ngStyle]="{
                 'cursor': isSelectable() ? 'pointer': 'unset',
                 'height.px': tableOptions.row.height,
-                'background-color': isSelected(row) ? tableOptions.selection.background : tableOptions.row.background,
+                'background-color': getColorRow(row),
                 'border-bottom-color': tableOptions.gridColor,
                 'color': isSelected(row) ? tableOptions.selection.color : tableOptions.row.color}">
     </mat-row>
 </mat-table>
 <div *ngIf="!isEditor && type === tableHistoryType" class="reload-btn">
-    <button mat-icon-button 
-            (click)="onRefresh()" 
+    <button mat-icon-button
+            (click)="onRefresh()"
             class="small-icon-button default-color"
             [style.color]="tableOptions.header.color"
             [style.top.px]="withToolbar ? 45 : 0">

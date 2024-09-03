@@ -6,7 +6,17 @@ import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
 
 import { TranslateService } from '@ngx-translate/core';
 
-import { TableType, TableCellType, TableCellAlignType, TableRangeType, GaugeTableProperty, GaugeEvent, GaugeEventType, GaugeEventActionType } from '../../../../_models/hmi';
+import {
+    TableType,
+    TableCellType,
+    TableCellAlignType,
+    TableRangeType,
+    GaugeTableProperty,
+    GaugeEvent,
+    GaugeEventType,
+    GaugeEventActionType,
+    CustomColorRow
+} from '../../../../_models/hmi';
 import { DataTableComponent } from '../data-table/data-table.component';
 import { TableCustomizerComponent, ITableCustom } from '../table-customizer/table-customizer.component';
 import { Utils } from '../../../../_helpers/utils';
@@ -39,6 +49,7 @@ export class TablePropertyComponent implements OnInit, OnDestroy {
     property: GaugeTableProperty;
     eventType = [Utils.getEnumKey(GaugeEventType, GaugeEventType.select)];
     selectActionType = {};
+    conditionType = ["==","!="];
     actionRunScript = Utils.getEnumKey(GaugeEventActionType, GaugeEventActionType.onRunScript);
     scripts$: Observable<Script[]>;
 
@@ -104,6 +115,18 @@ export class TablePropertyComponent implements OnInit, OnDestroy {
         });
     }
 
+    onAddCustomColorRow(){
+        const customColorRow = new CustomColorRow();
+        this.addCustomColorRow(customColorRow);
+    }
+
+    private addCustomColorRow(customColorRow: CustomColorRow){
+        if (!this.property.customColorRow) {
+            this.property.customColorRow = [];
+        }
+        this.property.customColorRow.push(customColorRow);
+    }
+
     onAddEvent() {
         const gaugeEvent = new GaugeEvent();
         this.addEvent(gaugeEvent);
@@ -118,6 +141,11 @@ export class TablePropertyComponent implements OnInit, OnDestroy {
 
     onRemoveEvent(index: number) {
         this.property.events.splice(index, 1);
+        this.onTableChanged();
+    }
+
+    onRemoveCustomColorRow(index: number){
+        this.property.customColorRow.splice(index, 1);
         this.onTableChanged();
     }
 

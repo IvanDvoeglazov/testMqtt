@@ -184,9 +184,9 @@
                                 <div class="my-form-field section-inline-name">
                                     <span>{{'table.property-row-name' | translate}}</span>
                                     <input [(ngModel)]="row.name" (change)="onTableChanged()" (keyup.enter)="onTableChanged()" type="text" >
-                                </div>    
+                                </div>
                                 <div class="section-inline-margin"></div>
-                                <div class="my-form-field section-inline-type">                            
+                                <div class="my-form-field section-inline-type">
                                     <span>{{'table.property-row-type' | translate}}</span>
                                     <mat-select [(value)]="column.type" (selectionChange)="onTableChanged()">
                                         <mat-option [value]="columnType.label">{{'table.property-column-label' | translate}}</mat-option>
@@ -248,7 +248,7 @@
                                     <div class="my-form-field inbk event-script-param">
                                         <span>{{'gauges.property-event-script-param-name' | translate}}</span>
                                         <input [(ngModel)]="scriptParam.name"
-                                                (change)="onTableChanged()" 
+                                                (change)="onTableChanged()"
                                                 type="text"
                                                 readonly
                                                 matTooltip="{{scriptParam.name}}"
@@ -257,7 +257,7 @@
                                     <div class="my-form-field inbk event-script-value" *ngIf="scriptParam.type === 'value'">
                                         <span>{{'gauges.property-event-script-param-value' | translate}}</span>
                                         <input [(ngModel)]="scriptParam.value"
-                                                (change)="onTableChanged()" 
+                                                (change)="onTableChanged()"
                                                 type="text">
                                     </div>
                                     <div class="my-form-field inbk event-script-tag" *ngIf="scriptParam.type === 'tagid'">
@@ -268,6 +268,54 @@
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </mat-tab>
+            <mat-tab label="CustomColorRow">
+                <div class="section-newline">&nbsp;</div>
+                <div class="events-toolbox">
+                    <button mat-icon-button (click)="onAddCustomColorRow()">
+                        <mat-icon>add_circle_outline</mat-icon>
+                    </button>
+                </div>
+                <div class="custom-color-section">
+                    <div *ngFor="let item of property?.customColorRow; index as i" class="custom-color">
+                        <div class="block">
+                            <div class="my-form-field inbk mr10 color-custom-column">
+                                <span>{{"Column Name"}}</span>
+                                <mat-select [(value)]="item.id" (selectionChange)="onTableChanged()">
+                                    <mat-option *ngFor="let column of property?.options.columns" [value]="column.id">
+                                        {{ column.label }}
+                                    </mat-option>
+                                </mat-select>
+                            </div>
+                            <div class="my-form-field inbk ml10 color-custom-condition">
+                                <span>{{"Condition"}}</span>
+                                <mat-select [(value)]="item.condition" (selectionChange)="onTableChanged()">
+                                    <mat-option *ngFor="let type of conditionType" [value]="type">
+                                        {{ type }}
+                                    </mat-option>
+                                </mat-select>
+                            </div>
+                            <div class="item-remove inbk color-custom-remove">
+                                <button mat-icon-button (click)="onRemoveCustomColorRow(i)" class="remove">
+                                    <mat-icon>clear</mat-icon>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="my-form-field inbk color-custom-value">
+                            <span>{{"String Value"}}</span>
+                            <input [(ngModel)]="item.stringValue"
+                                   (change)="onTableChanged()"
+                                   type="text">
+                        </div>
+                        <div class="my-form-field inbk color-custom-color">
+                            <span>{{"Row Color"}}</span>
+                            <input [(colorPicker)]="item.color" [cpAlphaChannel]="'always'" class="input-color" [style.background]="item.color"
+                                   [cpPresetColors]="defaultColor" [cpOKButton]="true" [cpCancelButton]="true" [cpCancelButtonClass]="'cpCancelButtonClass'"
+                                   [cpCancelButtonText]="'Cancel'" [cpOKButtonText]="'OK'" [cpOKButtonClass]="'cpOKButtonClass'" style="width: 88px" [cpPosition]="'auto'"
+                                   (colorPickerChange)="onTableChanged()" />
                         </div>
                     </div>
                 </div>
