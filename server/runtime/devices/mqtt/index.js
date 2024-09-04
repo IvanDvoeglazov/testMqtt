@@ -442,7 +442,7 @@ function MQTTclient(_data, _logger, _events, _runtime) {
                                                     data.tags[idColor].value = 1;
                                                     data.tags[idColor].rawValue = 1;
                                                     for(var idStatus in data.tags){
-                                                        if(data.tags[idStatus].address === 'statusGate'&&data.tags[idStatus].value){
+                                                        if(data.tags[idStatus].address === 'statusGate' && data.tags[idStatus].value && data.tags[idStatus].memaddress === data.tags[idColor].memaddress){
                                                             data.tags[idStatus].rawValue = false;
                                                             data.tags[idStatus].value = false;
                                                         }
