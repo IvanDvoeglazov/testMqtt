@@ -157,12 +157,17 @@ function MQTTclient(_data, _logger, _events, _runtime) {
                     lastTimestampValue = new Date().getTime();
 
                     for (var id in data.tags){
-                        if(data.tags[id].daq.restored && data.tags[id].value && lastTimestampValue-data.tags[id].timestamp>5000){
+                        if(data.tags[id].daq.restored && data.tags[id].address!=="colorGate"&& data.tags[id].value && lastTimestampValue-data.tags[id].timestamp>5000){
                             data.tags[id].value = false;
                             data.tags[id].rawValue = false;
                         }
+                        if(data.tags[id].daq.restored && data.tags[id].address==="colorGate" && data.tags[id].value>0 && lastTimestampValue-data.tags[id].timestamp>3000){
+                            data.tags[id].value = 0;
+                            data.tags[id].rawValue = 0;
+                        }
                     }
                     _emitValues(data.tags);
+                    //console.log(data.tags);
 
                         // var varsValueChanged = await _checkVarsChanged();
                    // lastTimestampValue = new Date().getTime();
@@ -238,8 +243,7 @@ function MQTTclient(_data, _logger, _events, _runtime) {
      */
     this.bindAddDaq = function (fnc) {
         //this.addDaq = fnc;// Add the DAQ value to db history
-        addFunc = fnc;
-    }
+        addFunc = fnc;    }
     this.addDaq = null;
 
     /**
@@ -314,6 +318,7 @@ function MQTTclient(_data, _logger, _events, _runtime) {
      * Set the Topic value, publish to broker (coming from frontend)
      */
     this.setValue = async function (tagId, value) {
+
         if (client && client.connected) {
             var tag = data.tags[tagId];
             if (tag) {
@@ -390,6 +395,8 @@ function MQTTclient(_data, _logger, _events, _runtime) {
                     } else {
                         client.on('message', function (topicAddr, msg, pkt) {
                             let lastTime = new Date().getTime();
+                            let isAccessViolation = false;
+                            let gateShortName = "";
                             if (topicsMap[topicAddr]) {
                                 for (var i = 0; i < topicsMap[topicAddr].length; i++) {
                                     var id = topicsMap[topicAddr][i].id;
@@ -403,13 +410,21 @@ function MQTTclient(_data, _logger, _events, _runtime) {
                                             if (!utils.isNullOrUndefined(subitems[data.tags[id].memaddress])) {
                                                 data.tags[id].rawValue = subitems[data.tags[id].memaddress];
                                                 data.tags[id].value = data.tags[id].rawValue;
-                                                if(data.tags[id].daq.enabled){
-                                                    logGate[id] = data.tags[id];
+                                                if(data.tags[id].memaddress==="gateShortName"){
+                                                    gateShortName = data.tags[id].value;
+                                                }
+                                                if(data.tags[id].memaddress==="isAccessViolation"){
+                                                    isAccessViolation = data.tags[id].value;
                                                 }
                                             } else {
-                                                data.tags[id].rawValue = oldvalue;
-                                                data.tags[id].value = oldvalue;
+                                                data.tags[id].rawValue = "";
+                                                data.tags[id].value = "";
                                             }
+                                            if(data.tags[id].daq.enabled){
+                                                logGate[id] = data.tags[id];
+                                            }
+
+
 
                                         } catch (err) {
                                             console.error(err);
@@ -419,6 +434,27 @@ function MQTTclient(_data, _logger, _events, _runtime) {
                                 if(!utils.isEmptyObject(logGate)) {
                                     addFunc(logGate, data.name, data.id);
                                     _emitValues(logGate);
+                                    for(var idColor in data.tags){
+                                        if(data.tags[idColor].address === 'colorGate'){
+                                            if(data.tags[idColor].memaddress===gateShortName){
+                                                data.tags[idColor].timestamp = lastTime;
+                                                if(isAccessViolation){
+                                                    data.tags[idColor].value = 1;
+                                                    data.tags[idColor].rawValue = 1;
+                                                    for(var idStatus in data.tags){
+                                                        if(data.tags[idStatus].address === 'statusGate'&&data.tags[idStatus].value){
+                                                            data.tags[idStatus].rawValue = false;
+                                                            data.tags[idStatus].value = false;
+                                                        }
+                                                    }
+                                                }else{
+                                                    data.tags[idColor].value = 0;
+                                                    data.tags[idColor].rawValue = 0;
+                                                }
+                                            }
+                                        }
+                                    }
+
                                     logGate = {};
                                 }
 
@@ -438,26 +474,29 @@ function MQTTclient(_data, _logger, _events, _runtime) {
      * Create the receiver of change tag value for the dependency in payload
      */
     var _createRefPublishReceiver = function () {
+/*
         events.on('tag-value:changed', function (event) {
             try {
                 if (memoryTagToPublish.has(event.id)) {
-                    // for topic with raw data (not depending from other tag)
+                    //for topic with raw data (not depending from other tag)
                     var oldValue = memoryTagToPublish.get(event.id);
                     memoryTagToPublish.set(event.id, event.value);
-                    if (oldValue !== event.value && refTagToTopics[event.id]) {
-                        if (refTagToTopics[event.id].topics.length) {
+                    //if (oldValue !== event.value && refTagToTopics[event.id]) {
+                        //if (refTagToTopics[event.id].topics.length) {
                             // for topic with json data with value from other device tags
                             // set the tag value in memory and publish the topic
-                            for (var i = 0; i < refTagToTopics[event.id].topics.length; i++) {
-                                _publishValues([refTagToTopics[event.id].topics[i]]);
-                            }
-                        }
-                    }
+                            //for (var i = 0; i < refTagToTopics[event.id].topics.length; i++) {
+                                //_publishValues([refTagToTopics[event.id].topics[i]]);
+                           // }
+                        //}
+                    //}
                 }
             } catch (err) {
                 console.error(err);
             }
         });
+*/
+
     }
     /**
      * Map the topics to address (path)
@@ -566,6 +605,7 @@ function MQTTclient(_data, _logger, _events, _runtime) {
      * @param {*} tags 
      */
     var _publishValues = function (tags) {
+        /*
         Object.keys(tags).forEach(key => {
             try {
                 const topicOptions = { retain: true };
@@ -612,6 +652,8 @@ function MQTTclient(_data, _logger, _events, _runtime) {
                 console.error(err);
             }
         })
+        */
+
     }
 }
 
