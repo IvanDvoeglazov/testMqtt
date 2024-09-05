@@ -157,7 +157,7 @@ function MQTTclient(_data, _logger, _events, _runtime) {
                     lastTimestampValue = new Date().getTime();
 
                     for (var id in data.tags){
-                        if(data.tags[id].daq.restored && data.tags[id].address!=="colorGate"&& data.tags[id].value && lastTimestampValue-data.tags[id].timestamp>5000){
+                        if(data.tags[id].daq.restored && data.tags[id].address!=="colorGate"&& data.tags[id].value && lastTimestampValue-data.tags[id].timestamp>3500){
                             data.tags[id].value = false;
                             data.tags[id].rawValue = false;
                         }
@@ -402,12 +402,14 @@ function MQTTclient(_data, _logger, _events, _runtime) {
                                     var id = topicsMap[topicAddr][i].id;
                                     var oldvalue = data.tags[id].rawValue;
                                     data.tags[id].rawValue = msg.toString();
-                                    data.tags[id].timestamp = lastTime;
                                     data.tags[id].changed = oldvalue !== data.tags[id].rawValue;
                                     if (data.tags[id].type === 'json' && data.tags[id].options && data.tags[id].options.subs && data.tags[id].memaddress) {
                                         try {
                                             var subitems = JSON.parse(data.tags[id].rawValue);
                                             if (!utils.isNullOrUndefined(subitems[data.tags[id].memaddress])) {
+                                                if(topicAddr==="statusGate" && !subitems[data.tags[id].memaddress]){
+                                                    continue;
+                                                }
                                                 data.tags[id].rawValue = subitems[data.tags[id].memaddress];
                                                 data.tags[id].value = data.tags[id].rawValue;
                                                 if(data.tags[id].memaddress==="gateShortName"){
@@ -430,6 +432,7 @@ function MQTTclient(_data, _logger, _events, _runtime) {
                                             console.error(err);
                                         }
                                     }
+                                    data.tags[id].timestamp = lastTime;
                                 }
                                 if(!utils.isEmptyObject(logGate)) {
                                     addFunc(logGate, data.name, data.id);
